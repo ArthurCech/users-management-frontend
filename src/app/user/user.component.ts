@@ -1,8 +1,13 @@
-import { HttpErrorResponse, HttpEvent, HttpEventType } from '@angular/common/http';
+import {
+  HttpErrorResponse,
+  HttpEvent,
+  HttpEventType,
+} from '@angular/common/http';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { NgForm } from '@angular/forms';
 import { Router } from '@angular/router';
 import { BehaviorSubject, Subscription } from 'rxjs';
+
 import { NotificationType } from '../enum/notification-type.enum';
 import { Role } from '../enum/role.enum';
 import { CustomHttpResponse } from '../model/custom-http-response.model';
@@ -18,18 +23,25 @@ import { UserService } from '../service/user.service';
   styleUrls: ['./user.component.css'],
 })
 export class UserComponent implements OnInit, OnDestroy {
+  private subscriptions: Subscription[] = [];
+
   private titleSubject = new BehaviorSubject<string>('Users');
   public titleAction$ = this.titleSubject.asObservable();
-  public refreshing: boolean;
+
   public users: User[];
+  public refreshing: boolean;
+
   public selectedUser: User;
+
+  public userPicture: File;
+  public userPictureName: string;
+
+  public userToBeUpdated = new User();
+  private currentUsername: string;
+
   public user: User; // authenticated user
-  private currentUsername: string; // edit
-  public editUser = new User(); // edit
-  public fileName: string;
-  public profileImage: File;
-  private subscriptions: Subscription[] = [];
-  public fileStatus = new FileUploadStatus();
+
+  public uploadPictureStatus = new FileUploadStatus();
 
   constructor(
     private authenticationService: AuthenticationService,
@@ -43,44 +55,125 @@ export class UserComponent implements OnInit, OnDestroy {
     this.getUsers(true);
   }
 
-  public get isUser(): boolean {
-    return this.getUserRole() === Role.USER;
-  }
-
-  public get isHrOrManager(): boolean {
-    return this.getUserRole() === Role.HR || this.getUserRole() === Role.MANAGER;
-  }
-
-  public get isAdmin(): boolean {
-    return this.getUserRole() === Role.ADMIN;
-  }
-
-  public get isSuperAdmin(): boolean {
-    return this.getUserRole() === Role.SUPER_ADMIN;
-  }
-
   public changeTitle(title: string): void {
     this.titleSubject.next(title);
   }
 
+  public onSearchUsers(searchName: string): void {
+    const usersFound: User[] = [];
+
+    for (const user of this.userService.getUsersFromLocalCache()) {
+      if (
+        user.firstName.toLowerCase().indexOf(searchName.toLowerCase()) !== -1 ||
+        user.lastName.toLowerCase().indexOf(searchName.toLowerCase()) !== -1 ||
+        user.username.toLowerCase().indexOf(searchName.toLowerCase()) !== -1 ||
+        user.userId.toLowerCase().indexOf(searchName.toLowerCase()) !== -1
+      ) {
+        usersFound.push(user);
+      }
+    }
+
+    this.users = usersFound;
+
+    if (usersFound.length === 0 || !searchName) {
+      this.users = this.userService.getUsersFromLocalCache();
+    }
+  }
+
   public getUsers(showNotification: boolean) {
     this.refreshing = true;
+
     this.subscriptions.push(
       this.userService.getUsers().subscribe(
-        (response: User[]) => {
-          this.userService.addUsersToLocalCache(response);
-          this.users = response;
-          if (showNotification) {
-            this.sendNotification(NotificationType.SUCCESS, `${response.length} user(s) loaded successfully.`);
-          }
+        (users: User[]) => {
           this.refreshing = false;
+
+          this.users = users;
+          this.userService.addUsersToLocalCache(users);
+
+          if (showNotification) {
+            this.sendNotification(
+              NotificationType.SUCCESS,
+              `${users.length} user(s) loaded successfully`
+            );
+          }
         },
         (errorResponse: HttpErrorResponse) => {
-          this.sendNotification(NotificationType.SUCCESS, errorResponse.error.message);
           this.refreshing = false;
+
+          this.sendNotification(
+            NotificationType.SUCCESS,
+            errorResponse.error.message
+          );
         }
       )
     );
+  }
+
+  public saveNewUser(): void {
+    this.clickButton('new-user-save');
+  }
+
+  public onAddNewUser(newUserForm: NgForm): void {
+    const formData = this.userService.createUserFormData(
+      null,
+      newUserForm.value,
+      this.userPicture
+    );
+
+    this.subscriptions.push(
+      this.userService.addUser(formData).subscribe(
+        (response: User) => {
+          this.clickButton('new-user-close');
+
+          this.getUsers(false);
+
+          this.userPictureName = null;
+          this.userPicture = null;
+
+          newUserForm.reset();
+
+          this.sendNotification(
+            NotificationType.SUCCESS,
+            `${response.firstName} ${response.lastName} added successfully`
+          );
+        },
+        (errorResponse: HttpErrorResponse) => {
+          this.sendNotification(
+            NotificationType.ERROR,
+            errorResponse.error.message
+          );
+          this.userPicture = null;
+        }
+      )
+    );
+  }
+
+  public onDeleteUser(username: string): void {
+    this.subscriptions.push(
+      this.userService.deleteUser(username).subscribe(
+        (customHttpResponse: CustomHttpResponse) => {
+          this.getUsers(false);
+
+          this.sendNotification(
+            NotificationType.SUCCESS,
+            customHttpResponse.message
+          );
+        },
+        (errorResponse: HttpErrorResponse) => {
+          this.sendNotification(
+            NotificationType.ERROR,
+            errorResponse.error.message
+          );
+        }
+      )
+    );
+  }
+
+  public onEditUser(userToBeUpdated: User): void {
+    this.userToBeUpdated = userToBeUpdated;
+    this.currentUsername = userToBeUpdated.username;
+    this.clickButton('openUserEdit');
   }
 
   public onSelectUser(selectedUser: User): void {
@@ -88,182 +181,27 @@ export class UserComponent implements OnInit, OnDestroy {
     this.clickButton('openUserInfo');
   }
 
-  public onProfileImageChange(fileName: string, profileImage: File): void {
-    this.fileName = fileName;
-    this.profileImage = profileImage;
-  }
-
-  public saveNewUser(): void {
-    this.clickButton('new-user-save');
-  }
-
-  public onAddNewUser(userForm: NgForm): void {
-    const formData = this.userService.createUserFormData(null, userForm.value, this.profileImage);
-    this.subscriptions.push(
-      this.userService.addUser(formData).subscribe(
-        (response: User) => {
-          this.clickButton('new-user-close');
-          this.getUsers(false);
-          this.fileName = null;
-          this.profileImage = null;
-          userForm.reset();
-          this.sendNotification(
-            NotificationType.SUCCESS,
-            `${response.firstName} ${response.lastName} added successfully.`
-          );
-        },
-        (errorResponse: HttpErrorResponse) => {
-          this.sendNotification(NotificationType.ERROR, errorResponse.error.message);
-          this.profileImage = null;
-        }
-      )
-    );
-  }
-
-  public onUpdateUser() {
-    const formData = this.userService.createUserFormData(this.currentUsername, this.editUser, this.profileImage);
-    this.subscriptions.push(
-      this.userService.updateUser(formData).subscribe(
-        (response: User) => {
-          this.clickButton('closeEditUserModalButton');
-          this.getUsers(false);
-          this.fileName = null;
-          this.profileImage = null;
-          this.sendNotification(
-            NotificationType.SUCCESS,
-            `${response.firstName} ${response.lastName} updated successfully.`
-          );
-        },
-        (errorResponse: HttpErrorResponse) => {
-          this.sendNotification(NotificationType.ERROR, errorResponse.error.message);
-          this.fileName = null;
-          this.profileImage = null;
-        }
-      )
-    );
-  }
-
-  public onSearchUsers(searchTerm: string): void {
-    const results: User[] = [];
-    for (const user of this.userService.getUsersFromLocalCache()) {
-      if (
-        user.firstName.toLowerCase().indexOf(searchTerm.toLowerCase()) !== -1 ||
-        user.lastName.toLowerCase().indexOf(searchTerm.toLowerCase()) !== -1 ||
-        user.username.toLowerCase().indexOf(searchTerm.toLowerCase()) !== -1 ||
-        user.userId.toLowerCase().indexOf(searchTerm.toLowerCase()) !== -1
-      ) {
-        results.push(user);
-      }
-    }
-    this.users = results;
-    if (results.length === 0 || !searchTerm) {
-      this.users = this.userService.getUsersFromLocalCache();
-    }
-  }
-
-  public onEditUser(editUser: User): void {
-    this.editUser = editUser;
-    this.currentUsername = editUser.username;
-    this.clickButton('openUserEdit');
-  }
-
-  public onDeleteUser(username: string): void {
-    this.subscriptions.push(
-      this.userService.deleteUser(username).subscribe(
-        (response: CustomHttpResponse) => {
-          this.sendNotification(NotificationType.SUCCESS, response.message);
-          this.getUsers(false);
-        },
-        (errorResponse: HttpErrorResponse) => {
-          this.sendNotification(NotificationType.ERROR, errorResponse.error.message);
-        }
-      )
-    );
-  }
-
-  public onResetPassword(emailForm: NgForm): void {
-    this.refreshing = true;
-    const emailAddress = emailForm.value['reset-password-email'];
-    this.subscriptions.push(
-      this.userService.resetPassword(emailAddress).subscribe(
-        (response: CustomHttpResponse) => {
-          this.sendNotification(NotificationType.SUCCESS, response.message);
-        },
-        (errorResponse: HttpErrorResponse) => {
-          this.sendNotification(NotificationType.WARNING, errorResponse.error.message);
-        },
-        () => {
-          emailForm.reset();
-          this.refreshing = false;
-        }
-      )
-    );
-  }
-
-  public onLogOut(): void {
-    this.authenticationService.logOut();
-    this.router.navigate(['/login']);
-    this.sendNotification(NotificationType.SUCCESS, `You've been successfully logged out.`);
-  }
-
-  public onUpdateCurrentUser(user: User): void {
-    this.refreshing = true;
-    this.currentUsername = this.authenticationService.getUserFromLocalCache().username;
-    const formData = this.userService.createUserFormData(this.currentUsername, user, this.profileImage);
-    this.subscriptions.push(
-      this.userService.updateUser(formData).subscribe(
-        (response: User) => {
-          this.authenticationService.addUserToLocalCache(response);
-          this.getUsers(false);
-          this.refreshing = false;
-          this.fileName = null;
-          this.profileImage = null;
-          this.sendNotification(
-            NotificationType.SUCCESS,
-            `${response.firstName} ${response.lastName} updated successfully.`
-          );
-        },
-        (errorResponse: HttpErrorResponse) => {
-          this.sendNotification(NotificationType.ERROR, errorResponse.error.message);
-          this.refreshing = false;
-          this.profileImage = null;
-        }
-      )
-    );
-  }
-
   public updateProfileImage(): void {
     this.clickButton('profile-image-input');
-  }
-
-  public resetProfileImage(): void {
-    const formData = new FormData();
-    formData.append('username', this.user.username);
-    this.subscriptions.push(
-      this.userService.resetProfileImage(formData).subscribe(
-        (event: HttpEvent<any>) => {
-          this.reportUploadProgress(event);
-        },
-        (errorResponse: HttpErrorResponse) => {
-          this.sendNotification(NotificationType.ERROR, errorResponse.error.message);
-          this.fileStatus.status = 'done';
-        }
-      )
-    );
   }
 
   public onUpdateProfileImage(): void {
     const formData = new FormData();
     formData.append('username', this.user.username);
-    formData.append('profileImage', this.profileImage);
+    formData.append('profileImage', this.userPicture);
+
     this.subscriptions.push(
       this.userService.updateProfileImage(formData).subscribe(
         (event: HttpEvent<any>) => {
           this.reportUploadProgress(event);
         },
         (errorResponse: HttpErrorResponse) => {
-          this.sendNotification(NotificationType.ERROR, errorResponse.error.message);
-          this.fileStatus.status = 'done';
+          this.uploadPictureStatus.status = 'done';
+
+          this.sendNotification(
+            NotificationType.ERROR,
+            errorResponse.error.message
+          );
         }
       )
     );
@@ -272,32 +210,195 @@ export class UserComponent implements OnInit, OnDestroy {
   private reportUploadProgress(event: HttpEvent<any>): void {
     switch (event.type) {
       case HttpEventType.UploadProgress:
-        this.fileStatus.percentage = Math.round((100 * event.loaded) / event.total);
-        this.fileStatus.status = 'progress';
+        this.uploadPictureStatus.percentage = Math.round(
+          (100 * event.loaded) / event.total
+        );
+        this.uploadPictureStatus.status = 'progress';
         break;
       case HttpEventType.Response:
         if (event.status === 200) {
-          this.user.profileImageUrl = `${event.body.profileImageUrl}?time=${new Date().getTime()}`;
+          this.user.profileImageUrl = `${
+            event.body.profileImageUrl
+          }?time=${new Date().getTime()}`;
+
+          this.uploadPictureStatus.status = 'done';
+
           this.sendNotification(
             NotificationType.SUCCESS,
-            `${event.body.firstName}\'s profile image updated successfully.`
+            `${event.body.firstName}\'s profile image updated successfully`
           );
-          this.fileStatus.status = 'done';
+
           break;
         } else {
-          this.sendNotification(NotificationType.SUCCESS, `Unable to upload image. Please try again.`);
+          this.sendNotification(
+            NotificationType.SUCCESS,
+            `Unable to upload image. Please try again`
+          );
+
           break;
         }
-      default:
-        `Finished all processes`;
     }
   }
 
-  private sendNotification(notificationType: NotificationType, message: string): void {
+  public onUpdateCurrentUser(user: User): void {
+    this.refreshing = true;
+
+    this.currentUsername =
+      this.authenticationService.getUserFromLocalCache().username;
+
+    const formData = this.userService.createUserFormData(
+      this.currentUsername,
+      user,
+      this.userPicture
+    );
+
+    this.subscriptions.push(
+      this.userService.updateUser(formData).subscribe(
+        (user: User) => {
+          this.refreshing = false;
+
+          this.authenticationService.addUserToLocalCache(user);
+
+          this.getUsers(false);
+
+          this.userPictureName = null;
+          this.userPicture = null;
+
+          this.sendNotification(
+            NotificationType.SUCCESS,
+            `${user.firstName} ${user.lastName} updated successfully`
+          );
+        },
+        (errorResponse: HttpErrorResponse) => {
+          this.refreshing = false;
+          this.userPicture = null;
+
+          this.sendNotification(
+            NotificationType.ERROR,
+            errorResponse.error.message
+          );
+        }
+      )
+    );
+  }
+
+  public onLogOut(): void {
+    this.authenticationService.logOut();
+
+    this.router.navigate(['/login']);
+
+    this.sendNotification(
+      NotificationType.SUCCESS,
+      `You've been successfully logged out`
+    );
+  }
+
+  public onProfileImageChange(
+    userPictureName: string,
+    userPicture: File
+  ): void {
+    this.userPictureName = userPictureName;
+    this.userPicture = userPicture;
+  }
+
+  public onUpdateUser() {
+    const formData = this.userService.createUserFormData(
+      this.currentUsername,
+      this.userToBeUpdated,
+      this.userPicture
+    );
+
+    this.subscriptions.push(
+      this.userService.updateUser(formData).subscribe(
+        (user: User) => {
+          this.clickButton('closeEditUserModalButton');
+
+          this.getUsers(false);
+
+          this.userPictureName = null;
+          this.userPicture = null;
+
+          this.sendNotification(
+            NotificationType.SUCCESS,
+            `${user.firstName} ${user.lastName} updated successfully`
+          );
+        },
+        (errorResponse: HttpErrorResponse) => {
+          this.userPictureName = null;
+          this.userPicture = null;
+
+          this.sendNotification(
+            NotificationType.ERROR,
+            errorResponse.error.message
+          );
+        }
+      )
+    );
+  }
+
+  public onResetPassword(emailForm: NgForm): void {
+    this.refreshing = true;
+
+    const emailAddress = emailForm.value['email'];
+
+    this.subscriptions.push(
+      this.userService.resetPassword(emailAddress).subscribe(
+        (response: CustomHttpResponse) => {
+          this.refreshing = false;
+
+          this.sendNotification(NotificationType.SUCCESS, response.message);
+        },
+        (errorResponse: HttpErrorResponse) => {
+          this.refreshing = false;
+
+          this.sendNotification(
+            NotificationType.WARNING,
+            errorResponse.error.message
+          );
+        },
+        () => {
+          emailForm.reset();
+        }
+      )
+    );
+  }
+
+  public resetProfileImage(): void {
+    const formData = new FormData();
+    formData.append('username', this.user.username);
+
+    this.subscriptions.push(
+      this.userService.resetProfileImage(formData).subscribe(
+        (event: HttpEvent<any>) => {
+          this.reportUploadProgress(event);
+        },
+        (errorResponse: HttpErrorResponse) => {
+          this.uploadPictureStatus.status = 'done';
+
+          this.sendNotification(
+            NotificationType.ERROR,
+            errorResponse.error.message
+          );
+        }
+      )
+    );
+  }
+
+  private getUserRole(): string {
+    return this.authenticationService.getUserFromLocalCache().role;
+  }
+
+  private sendNotification(
+    notificationType: NotificationType,
+    message: string
+  ): void {
     if (message) {
       this.notificationService.notify(notificationType, message);
     } else {
-      this.notificationService.notify(notificationType, 'An error occurred. Please try again.');
+      this.notificationService.notify(
+        notificationType,
+        'An error occurred. Please try again.'
+      );
     }
   }
 
@@ -305,8 +406,22 @@ export class UserComponent implements OnInit, OnDestroy {
     document.getElementById(buttonId).click();
   }
 
-  private getUserRole(): string {
-    return this.authenticationService.getUserFromLocalCache().role;
+  public get isUser(): boolean {
+    return this.getUserRole() === Role.USER;
+  }
+
+  public get isHrOrManager(): boolean {
+    return (
+      this.getUserRole() === Role.HR || this.getUserRole() === Role.MANAGER
+    );
+  }
+
+  public get isAdmin(): boolean {
+    return this.getUserRole() === Role.ADMIN;
+  }
+
+  public get isSuperAdmin(): boolean {
+    return this.getUserRole() === Role.SUPER_ADMIN;
   }
 
   ngOnDestroy(): void {

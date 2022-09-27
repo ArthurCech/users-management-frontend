@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { JwtHelperService } from '@auth0/angular-jwt';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
+
 import { User } from '../model/user.model';
 
 @Injectable({
@@ -57,6 +58,7 @@ export class AuthenticationService {
 
   public isUserLoggedIn(): boolean {
     this.loadToken();
+
     if (
       this.token != null &&
       this.token !== '' &&

@@ -2,6 +2,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
+
 import { HeaderType } from '../enum/header-type.enum';
 import { NotificationType } from '../enum/notification-type.enum';
 import { User } from '../model/user.model';
@@ -14,8 +15,9 @@ import { NotificationService } from '../service/notification.service';
   styleUrls: ['./login.component.css'],
 })
 export class LoginComponent implements OnInit, OnDestroy {
-  public showLoading: boolean = false;
   private subscriptions: Subscription[] = [];
+
+  public showLoading: boolean = false;
 
   constructor(
     private router: Router,
@@ -25,9 +27,9 @@ export class LoginComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     if (this.authenticationService.isUserLoggedIn()) {
-      this.router.navigateByUrl('/user/management');
+      this.router.navigate(['/user/management']);
     } else {
-      this.router.navigateByUrl('/login');
+      this.router.navigate(['/login']);
     }
   }
 
@@ -35,26 +37,39 @@ export class LoginComponent implements OnInit, OnDestroy {
     this.showLoading = true;
     this.subscriptions.push(
       this.authenticationService.login(user).subscribe(
-        (response: HttpResponse<User>) => {
-          const token = response.headers.get(HeaderType.JWT_TOKEN);
-          this.authenticationService.saveToken(token); // add token to local storage
-          this.authenticationService.addUserToLocalCache(response.body); // add user to local storage
+        (loggedInUser: HttpResponse<User>) => {
           this.showLoading = false;
-          this.router.navigateByUrl('/user/management');
+
+          const token = loggedInUser.headers.get(HeaderType.JWT_TOKEN);
+
+          this.authenticationService.saveToken(token);
+          this.authenticationService.addUserToLocalCache(loggedInUser.body);
+
+          this.router.navigate(['/user/management']);
         },
         (errorResponse: HttpErrorResponse) => {
           this.showLoading = false;
-          this.sendErrorNotification(NotificationType.ERROR, errorResponse.error.message);
+
+          this.sendErrorNotification(
+            NotificationType.ERROR,
+            errorResponse.error.message
+          );
         }
       )
     );
   }
 
-  private sendErrorNotification(notificationType: NotificationType, message: string): void {
+  private sendErrorNotification(
+    notificationType: NotificationType,
+    message: string
+  ): void {
     if (message) {
       this.notificationService.notify(notificationType, message);
     } else {
-      this.notificationService.notify(notificationType, 'An error occurred. Please try again.');
+      this.notificationService.notify(
+        notificationType,
+        'An error occurred. Please try again'
+      );
     }
   }
 

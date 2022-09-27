@@ -22,7 +22,10 @@
               #firstNameInput="ngModel"
             />
           </div>
-          <span class="help-block" *ngIf="firstNameInput.invalid && firstNameInput.touched" style="color: red"
+          <span
+            class="help-block"
+            *ngIf="firstNameInput.invalid && firstNameInput.touched"
+            style="color: red"
             >Please enter a first name</span
           >
           <div class="input-group mb-3">
@@ -39,12 +42,17 @@
               #lastNameInput="ngModel"
             />
           </div>
-          <span class="help-block" *ngIf="lastNameInput.invalid && lastNameInput.touched" style="color: red"
+          <span
+            class="help-block"
+            *ngIf="lastNameInput.invalid && lastNameInput.touched"
+            style="color: red"
             >Please enter a last name</span
           >
           <div class="input-group mb-3">
             <div class="input-group-append">
-              <span class="input-group-text"><i class="fas fa-id-card"></i></span>
+              <span class="input-group-text"
+                ><i class="fas fa-id-card"></i
+              ></span>
             </div>
             <input
               type="text"
@@ -56,12 +64,17 @@
               #usernameInput="ngModel"
             />
           </div>
-          <span class="help-block" *ngIf="usernameInput.invalid && usernameInput.touched" style="color: red"
+          <span
+            class="help-block"
+            *ngIf="usernameInput.invalid && usernameInput.touched"
+            style="color: red"
             >Please enter a username</span
           >
           <div class="input-group mb-2">
             <div class="input-group-append">
-              <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+              <span class="input-group-text"
+                ><i class="fas fa-envelope"></i
+              ></span>
             </div>
             <input
               type="text"
@@ -73,12 +86,21 @@
               #emailInput="ngModel"
             />
           </div>
-          <span class="help-block" *ngIf="emailInput.invalid && emailInput.touched" style="color: red"
+          <span
+            class="help-block"
+            *ngIf="emailInput.invalid && emailInput.touched"
+            style="color: red"
             >Please enter an email</span
           >
           <div class="d-flex justify-content-center mt-3 login-container">
-            <button type="submit" [disabled]="registerForm.invalid || showLoading" name="button" class="btn login_btn">
-              <i class="fas fa-spinner fa-spin" *ngIf="showLoading"></i>&nbsp;&nbsp;
+            <button
+              type="submit"
+              [disabled]="registerForm.invalid || showLoading"
+              name="button"
+              class="btn login_btn"
+            >
+              <i class="fas fa-spinner fa-spin" *ngIf="showLoading"></i
+              >&nbsp;&nbsp;
               <span *ngIf="!showLoading">Register</span>
             </button>
           </div>

@@ -1,6 +1,13 @@
 import { Injectable } from '@angular/core';
-import { ActivatedRouteSnapshot, CanActivate, Router, RouterStateSnapshot, UrlTree } from '@angular/router';
+import {
+  ActivatedRouteSnapshot,
+  CanActivate,
+  Router,
+  RouterStateSnapshot,
+  UrlTree,
+} from '@angular/router';
 import { Observable } from 'rxjs';
+
 import { NotificationType } from '../enum/notification-type.enum';
 import { AuthenticationService } from '../service/authentication.service';
 import { NotificationService } from '../service/notification.service';
@@ -18,7 +25,11 @@ export class AuthenticationGuard implements CanActivate {
   canActivate(
     route: ActivatedRouteSnapshot,
     state: RouterStateSnapshot
-  ): Observable<boolean | UrlTree> | Promise<boolean | UrlTree> | boolean | UrlTree {
+  ):
+    | Observable<boolean | UrlTree>
+    | Promise<boolean | UrlTree>
+    | boolean
+    | UrlTree {
     return this.isUserLoggedIn();
   }
 
@@ -26,8 +37,14 @@ export class AuthenticationGuard implements CanActivate {
     if (this.authenticationService.isUserLoggedIn()) {
       return true;
     }
+
     this.router.navigate(['/login']);
-    this.notificationService.notify(NotificationType.ERROR, `You need to log in to access this page.`);
+
+    this.notificationService.notify(
+      NotificationType.ERROR,
+      `You need to log in to access this page.`
+    );
+
     return false;
   }
 }

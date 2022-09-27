@@ -2,6 +2,7 @@ import { HttpClient, HttpEvent } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
+
 import { CustomHttpResponse } from '../model/custom-http-response.model';
 import { User } from '../model/user.model';
 
@@ -22,29 +23,41 @@ export class UserService {
   }
 
   public updateUser(formData: FormData): Observable<User> {
-    return this.http.put<User>(`${this.host}/user/update`, formData);
+    return this.http.post<User>(`${this.host}/user/update`, formData);
   }
 
   public resetPassword(email: string): Observable<CustomHttpResponse> {
-    return this.http.get<CustomHttpResponse>(`${this.host}/user/reset-password/${email}`);
+    return this.http.get<CustomHttpResponse>(
+      `${this.host}/user/resetpassword/${email}`
+    );
   }
 
   public updateProfileImage(formData: FormData): Observable<HttpEvent<User>> {
-    return this.http.put<User>(`${this.host}/user/update-profile-image`, formData, {
-      reportProgress: true,
-      observe: 'events',
-    });
+    return this.http.post<User>(
+      `${this.host}/user/updateProfileImage`,
+      formData,
+      {
+        reportProgress: true,
+        observe: 'events',
+      }
+    );
   }
 
   public resetProfileImage(formData: FormData): Observable<HttpEvent<User>> {
-    return this.http.put<User>(`${this.host}/user/reset-profile-image`, formData, {
-      reportProgress: true,
-      observe: 'events',
-    });
+    return this.http.put<User>(
+      `${this.host}/user/resetProfileImage`,
+      formData,
+      {
+        reportProgress: true,
+        observe: 'events',
+      }
+    );
   }
 
   public deleteUser(username: string): Observable<CustomHttpResponse> {
-    return this.http.delete<CustomHttpResponse>(`${this.host}/user/delete/${username}`);
+    return this.http.delete<CustomHttpResponse>(
+      `${this.host}/user/delete/${username}`
+    );
   }
 
   public addUsersToLocalCache(users: User[]): void {
@@ -53,12 +66,16 @@ export class UserService {
 
   public getUsersFromLocalCache(): User[] {
     if (localStorage.getItem('users')) {
-      return JSON.parse(localStorage.getItem('users')!);
+      return JSON.parse(localStorage.getItem('users'));
     }
-    return null!;
+    return null;
   }
 
-  public createUserFormData(loggedInUsername: string, user: User, profileImage: File): FormData {
+  public createUserFormData(
+    loggedInUsername: string,
+    user: User,
+    profileImage: File
+  ): FormData {
     const formData = new FormData();
     formData.append('currentUsername', loggedInUsername);
     formData.append('firstName', user.firstName);

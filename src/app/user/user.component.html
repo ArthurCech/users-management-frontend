@@ -1,32 +1,41 @@
 <div class="container">
+  <!-- header -->
   <div class="row mb-2 mt-2 text-center">
-    <div class="col-md-4"></div>
-    <div class="col-md-4">
+    <div class="col-md-12">
       <h5>User Management Portal</h5>
       <small *ngIf="titleAction$ | async as title">{{ title }}</small>
     </div>
-    <div class="col-md-4"></div>
   </div>
 
   <!-- navbar -->
   <nav class="navbar navbar-expand-md breadcrumb">
     <div class="collapse navbar-collapse" id="navbarCollapse">
       <div class="nav nav-pills">
-        <a href="#users" (click)="changeTitle('Users')" class="nav-item nav-link active ml-1" data-toggle="tab">
+        <a
+          (click)="changeTitle('Users')"
+          href="#users"
+          class="nav-item nav-link active ml-1"
+          data-toggle="tab"
+        >
           <i class="fa fa-users"></i>
           Users
         </a>
         <a
           [hidden]="isUser || isHrOrManager"
-          href="#reset-password"
           (click)="changeTitle('Settings')"
+          href="#reset-password"
           class="nav-item nav-link ml-3"
           data-toggle="tab"
         >
           <i class="fa fa-cogs"></i>
           Settings
         </a>
-        <a href="#profile" (click)="changeTitle('Profile')" class="nav-item nav-link move-right mr-3" data-toggle="tab">
+        <a
+          (click)="changeTitle('Profile')"
+          href="#profile"
+          class="nav-item nav-link move-right mr-3"
+          data-toggle="tab"
+        >
           <i class="fa fa-user"></i>
           Welcome, {{ user?.firstName }}
         </a>
@@ -34,25 +43,24 @@
     </div>
   </nav>
 
+  <!-- main content -->
   <div class="tab-content mt-3" id="myTabContent">
     <!-- list users -->
     <div class="tab-pane fade show active" id="users">
-      <div class="mb-3">
-        <div class="btn-group mr-2 float-left">
+      <div class="mb-3 float-right">
+        <div class="btn-group mr-2">
           <!-- input to search user -->
           <form class="form-inline my-2 my-lg-0 justify-content-center">
             <input
+              (ngModelChange)="onSearchUsers(searchInput.value)"
+              #searchInput="ngModel"
               name="searchTerm"
               class="form-control mr-sm-2"
               ngModel
-              #searchInput="ngModel"
-              (ngModelChange)="onSearchUsers(searchInput.value)"
               type="search"
               placeholder="Search here"
             />
           </form>
-        </div>
-        <div class="btn-toolbar float-right">
           <button
             [hidden]="isUser || isHrOrManager"
             type="button"
@@ -62,8 +70,11 @@
           >
             <i class="fa fa-plus"></i>New User
           </button>
-          <button type="button" class="btn btn-info" (click)="getUsers(true)">
-            <i *ngIf="refreshing" class="fas fa-sync fa-spin"></i><i *ngIf="!refreshing" class="fas fa-sync"></i>
+        </div>
+        <div class="btn-group">
+          <button (click)="getUsers(true)" type="button" class="btn btn-info">
+            <i *ngIf="refreshing" class="fas fa-sync fa-spin"></i
+            ><i *ngIf="!refreshing" class="fas fa-sync"></i>
           </button>
         </div>
       </div>
@@ -80,33 +91,39 @@
             <th>Actions</th>
           </tr>
         </thead>
-        <tbody *ngFor="let appUser of users">
+        <tbody *ngFor="let user of users">
           <tr class="text-center">
-            <td (click)="onSelectUser(appUser)">
+            <td (click)="onSelectUser(user)">
               <img
                 height="40"
                 width="40"
-                src="{{ appUser?.profileImageUrl }}"
+                src="{{ user?.profileImageUrl }}"
                 class="rounded-circle img-fluid img-thumbnail"
-                alt="{{ appUser?.firstName }} {{ appUser?.lastName }} profile picture"
+                alt="{{ user?.firstName }} {{ user?.lastName }} profile picture"
               />
             </td>
-            <td (click)="onSelectUser(appUser)">{{ appUser?.userId }}</td>
-            <td (click)="onSelectUser(appUser)">{{ appUser?.firstName }}</td>
-            <td (click)="onSelectUser(appUser)">{{ appUser?.lastName }}</td>
-            <td (click)="onSelectUser(appUser)">{{ appUser?.username }}</td>
-            <td (click)="onSelectUser(appUser)">{{ appUser?.email }}</td>
-            <td (click)="onSelectUser(appUser)">
-              <span [hidden]="!appUser?.active" class="badge badge-success">Active</span>
-              <span [hidden]="appUser?.active" class="badge badge-danger">Inactive</span>
+            <td (click)="onSelectUser(user)">{{ user?.userId }}</td>
+            <td (click)="onSelectUser(user)">{{ user?.firstName }}</td>
+            <td (click)="onSelectUser(user)">{{ user?.lastName }}</td>
+            <td (click)="onSelectUser(user)">{{ user?.username }}</td>
+            <td (click)="onSelectUser(user)">{{ user?.email }}</td>
+            <td (click)="onSelectUser(user)">
+              <span [hidden]="!user?.active" class="badge badge-success"
+                >Active</span
+              >
+              <span [hidden]="user?.active" class="badge badge-danger"
+                >Inactive</span
+              >
             </td>
             <td>
               <div class="btn-group">
-                <button class="btn btn-outline-info" (click)="onEditUser(appUser)"><i class="fas fa-edit"></i></button>
+                <button (click)="onEditUser(user)" class="btn btn-outline-info">
+                  <i class="fas fa-edit"></i>
+                </button>
                 <button
                   [hidden]="isUser || isHrOrManager"
                   class="btn btn-outline-danger"
-                  (click)="onDeleteUser(appUser.username)"
+                  (click)="onDeleteUser(user.username)"
                 >
                   <i class="fas fa-trash"></i>
                 </button>
@@ -117,29 +134,558 @@
       </table>
     </div>
 
-    <button [hidden]="true" type="button" id="openUserInfo" data-toggle="modal" data-target="#viewUserModal"></button>
-    <button [hidden]="true" type="button" id="openUserEdit" data-toggle="modal" data-target="#editUserModal"></button>
+    <!-- invisible buttons to open modal (view user info and edit user) -->
+    <button
+      [hidden]="true"
+      type="button"
+      id="openUserInfo"
+      data-toggle="modal"
+      data-target="#viewUserModal"
+    ></button>
+    <button
+      [hidden]="true"
+      type="button"
+      id="openUserEdit"
+      data-toggle="modal"
+      data-target="#editUserModal"
+    ></button>
+
+    <!-- modal user info -->
+    <div
+      class="modal fade bd-example-modal-lg"
+      id="viewUserModal"
+      tabindex="-1"
+      role="dialog"
+      aria-labelledby=""
+      aria-hidden="true"
+    >
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <!-- header - general infos and close button -->
+          <div class="modal-header">
+            <h5 class="modal-title text-center" id="exampleModalLongTitle">
+              {{ selectedUser?.firstName }}
+              {{ selectedUser?.lastName }}
+            </h5>
+            <button
+              type="button"
+              class="close"
+              data-dismiss="modal"
+              aria-label="Close"
+            >
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <!-- content - user data -->
+          <div class="modal-body">
+            <div>
+              <div class="card">
+                <div class="card-body">
+                  <div class="row">
+                    <div class="col-12 col-sm-auto">
+                      <div class="mx-auto" style="width: 120px">
+                        <div
+                          class="d-flex justify-content-center align-items-center rounded"
+                        >
+                          <img
+                            class="rounded"
+                            height="120"
+                            width="120"
+                            src="{{ selectedUser?.profileImageUrl }}"
+                            alt="{{ selectedUser?.firstName }} {{
+                              selectedUser?.lastName
+                            }} profile picture"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    <div
+                      class="col d-flex flex-column flex-sm-row justify-content-between"
+                    >
+                      <div class="text-center text-sm-left mb-sm-0">
+                        <h6 class="pt-sm-2 pb-1 mb-0 text-nowrap">
+                          {{ selectedUser?.firstName }}
+                          {{ selectedUser?.lastName }}
+                        </h6>
+                        <p class="mb-1">{{ selectedUser?.username }}</p>
+                        <div class="">
+                          Status:
+                          <span
+                            [hidden]="!selectedUser?.active"
+                            class="badge badge-success"
+                            >Active</span
+                          >
+                          <span
+                            [hidden]="selectedUser?.active"
+                            class="badge badge-danger"
+                            >Inactive</span
+                          >
+                        </div>
+                        <div
+                          *ngIf="selectedUser?.lastLoginDateDisplay"
+                          class="text-muted"
+                        >
+                          <small
+                            >Last Login:
+                            {{
+                              selectedUser?.lastLoginDateDisplay | date: "short"
+                            }}</small
+                          >
+                        </div>
+                      </div>
+                      <div class="text-center text-sm-right">
+                        <div class="text-muted">
+                          <small
+                            >Joined
+                            {{
+                              selectedUser?.joinDate | date: "mediumDate"
+                            }}</small
+                          >
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <ul class="list-group list-group-flush">
+                  <li class="list-group-item"></li>
+                  <li class="list-group-item">
+                    <i class="fa fa-id-badge float-right"></i
+                    >{{ selectedUser?.userId }}
+                  </li>
+                  <li class="list-group-item">
+                    <i class="fa fa-envelope float-right"></i
+                    >{{ selectedUser?.email }}
+                  </li>
+                  <li class="list-group-item">
+                    <i class="fas fa-shield-alt float-right"></i
+                    >{{ selectedUser?.role.substring(5) }}
+                  </li>
+                  <li
+                    *ngIf="selectedUser?.lastLoginDateDisplay"
+                    class="list-group-item"
+                  >
+                    <i class="fas fa-sign-in-alt float-right"></i
+                    >{{
+                      selectedUser?.lastLoginDateDisplay
+                        | date: "EEEE | MMMM d, y | hh:mm:ss a"
+                    }}
+                  </li>
+                  <li class="list-group-item">
+                    <span [hidden]="selectedUser?.notLocked">
+                      <i class="fa fa-lock float-right" style="color: red"> </i>
+                      Account Locked
+                    </span>
+                    <span [hidden]="!selectedUser?.notLocked">
+                      <i class="fa fa-unlock float-right" style="color: green">
+                      </i>
+                      Account Unlocked
+                    </span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <!-- footer - close button -->
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-dismiss="modal"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- model add user -->
+    <div
+      [hidden]="isUser || isHrOrManager"
+      class="modal draggable fade bd-example-modal-lg"
+      id="addUserModal"
+      tabindex="-1"
+      role="dialog"
+      aria-labelledby="exampleModalCenterTitle"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <!-- header - general info and close button -->
+          <div class="modal-header">
+            <h5 class="modal-title text-center">New User</h5>
+            <button
+              type="button"
+              class="close"
+              data-dismiss="modal"
+              aria-label="Close"
+            >
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <!-- body - form -->
+          <div class="modal-body">
+            <div>
+              <form
+                #newUserForm="ngForm"
+                (ngSubmit)="onAddNewUser(newUserForm)"
+              >
+                <div class="form-group">
+                  <label for="firstName">First Name</label>
+                  <input
+                    ngModel
+                    name="firstName"
+                    required
+                    type="text"
+                    class="form-control"
+                  />
+                </div>
+                <div class="form-group">
+                  <label for="lastName">Last Name</label>
+                  <input
+                    ngModel
+                    name="lastName"
+                    required
+                    type="text"
+                    class="form-control"
+                  />
+                </div>
+                <div class="form-group">
+                  <label for="username">Username</label>
+                  <input
+                    ngModel
+                    name="username"
+                    required
+                    type="text"
+                    class="form-control"
+                  />
+                </div>
+                <div class="form-group">
+                  <label for="email">Email</label>
+                  <input
+                    ngModel
+                    name="email"
+                    required
+                    type="email"
+                    class="form-control"
+                  />
+                </div>
+                <div *ngIf="isSuperAdmin" class="form-group">
+                  <label for="authority">Role</label>
+                  <select
+                    ngModel="ROLE_USER"
+                    name="role"
+                    required
+                    class="form-control"
+                  >
+                    <option value="ROLE_USER">USER</option>
+                    <option value="ROLE_HR">HR</option>
+                    <option value="ROLE_MANAGER">MANAGER</option>
+                    <option value="ROLE_ADMIN">ADMIN</option>
+                    <option value="ROLE_SUPER_ADMIN">SUPER ADMIN</option>
+                  </select>
+                </div>
+                <div *ngIf="!isSuperAdmin" class="form-group">
+                  <label for="authority">Role</label>
+                  <input
+                    ngModel="USER"
+                    name="role"
+                    required
+                    readonly
+                    type="text"
+                    class="form-control"
+                  />
+                </div>
+                <div class="input-group mb-2">
+                  <div class="input-group-prepend">
+                    <span class="input-group-text">Profile Picture </span>
+                  </div>
+                  <div class="custom-file">
+                    <input
+                      accept="image/*"
+                      name="profileImage"
+                      (change)="
+                        onProfileImageChange(
+                          $event.target.files[0].name,
+                          $event.target.files[0]
+                        )
+                      "
+                      type="profileImage"
+                      class="custom-file-input"
+                    />
+                    <label class="custom-file-label"
+                      ><span [hidden]="!userPictureName">{{
+                        userPictureName
+                      }}</span>
+                      <span [hidden]="userPictureName">Choose File</span>
+                    </label>
+                  </div>
+                </div>
+                <fieldset class="form-group">
+                  <div class="form-check">
+                    <label class="form-check-label">
+                      <input
+                        ngModel
+                        name="active"
+                        type="checkbox"
+                        class="form-check-input"
+                      />
+                      Active
+                    </label>
+                  </div>
+                  <div class="form-check disabled">
+                    <label class="form-check-label">
+                      <input
+                        ngModel
+                        name="notLocked"
+                        type="checkbox"
+                        class="form-check-input"
+                      />
+                      Unlocked
+                    </label>
+                  </div>
+                </fieldset>
+                <button
+                  type="submit"
+                  style="display: none"
+                  id="new-user-save"
+                ></button>
+              </form>
+            </div>
+          </div>
+          <!-- footer - close button -->
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-dismiss="modal"
+              id="new-user-close"
+            >
+              Close
+            </button>
+            <button
+              (click)="saveNewUser()"
+              [disabled]="newUserForm.invalid"
+              type="button"
+              class="btn btn-primary"
+            >
+              Save changes
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- modal edit user -->
+    <div
+      class="modal draggable fade bd-example-modal-lg"
+      id="editUserModal"
+      tabindex="-1"
+      role="dialog"
+      aria-labelledby="exampleModalCenterTitle"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <!-- header - general info and close button -->
+          <div class="modal-header">
+            <h5 class="modal-title text-center">
+              Edit {{ userToBeUpdated?.firstName }}
+              {{ userToBeUpdated?.lastName }}
+              <small [hidden]="isHrOrManager || isAdmin || isSuperAdmin"
+                >(read only)</small
+              >
+            </h5>
+            <button
+              type="button"
+              class="close"
+              data-dismiss="modal"
+              aria-label="Close"
+            >
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <!-- body - form to insert the new data of user -->
+          <div class="modal-body">
+            <div>
+              <form #editUserForm="ngForm">
+                <div class="form-group">
+                  <label for="firstName">First Name</label>
+                  <input
+                    [disabled]="isUser"
+                    [(ngModel)]="userToBeUpdated.firstName"
+                    name="firstName"
+                    required
+                    type="text"
+                    class="form-control"
+                  />
+                </div>
+                <div class="form-group">
+                  <label for="lastName">Last Name</label>
+                  <input
+                    [disabled]="isUser"
+                    [(ngModel)]="userToBeUpdated.lastName"
+                    name="lastName"
+                    required
+                    type="text"
+                    class="form-control"
+                  />
+                </div>
+                <div class="form-group">
+                  <label for="username">Username</label>
+                  <input
+                    [disabled]="isUser"
+                    [(ngModel)]="userToBeUpdated.username"
+                    name="username"
+                    required
+                    type="text"
+                    class="form-control"
+                  />
+                </div>
+                <div class="form-group">
+                  <label for="email">Email</label>
+                  <input
+                    [disabled]="isUser"
+                    [(ngModel)]="userToBeUpdated.email"
+                    name="email"
+                    required
+                    type="email"
+                    class="form-control"
+                  />
+                </div>
+                <div class="form-group">
+                  <label for="authority"
+                    >Role
+                    <small [hidden]="isSuperAdmin">(read only)</small></label
+                  >
+                  <select
+                    [disabled]="isUser"
+                    [(ngModel)]="userToBeUpdated.role"
+                    name="role"
+                    required
+                    class="form-control"
+                  >
+                    <option value="ROLE_USER">USER</option>
+                    <option value="ROLE_HR">HR</option>
+                    <option value="ROLE_MANAGER">MANAGER</option>
+                    <option value="ROLE_ADMIN">ADMIN</option>
+                    <option value="ROLE_SUPER_ADMIN">SUPER ADMIN</option>
+                  </select>
+                </div>
+                <div class="input-group mb-2">
+                  <div class="input-group-prepend">
+                    <span class="input-group-text">Profile Picture </span>
+                  </div>
+                  <div class="custom-file">
+                    <input
+                      [disabled]="isUser"
+                      name="profileImage"
+                      accept="image/*"
+                      (change)="
+                        onProfileImageChange(
+                          $event.target.files[0].name,
+                          $event.target.files[0]
+                        )
+                      "
+                      class="custom-file-input"
+                      type="file"
+                    />
+                    <label class="custom-file-label"
+                      ><span [hidden]="!userPictureName">{{
+                        userPictureName
+                      }}</span>
+                      <span [hidden]="userPictureName">Choose File</span>
+                    </label>
+                  </div>
+                </div>
+                <fieldset class="form-group">
+                  <div class="form-check">
+                    <label class="form-check-label">
+                      <input
+                        [disabled]="isUser"
+                        [(ngModel)]="userToBeUpdated.active"
+                        name="active"
+                        type="checkbox"
+                        class="form-check-input"
+                      />
+                      Active
+                      <small [hidden]="isHrOrManager || isAdmin || isSuperAdmin"
+                        >(read only)</small
+                      >
+                    </label>
+                  </div>
+                  <div class="form-check disabled">
+                    <label class="form-check-label">
+                      <input
+                        [disabled]="isUser"
+                        [(ngModel)]="userToBeUpdated.notLocked"
+                        name="locked"
+                        type="checkbox"
+                        class="form-check-input"
+                      />
+                      Unlocked
+                      <small [hidden]="isHrOrManager || isAdmin || isSuperAdmin"
+                        >(read only)</small
+                      >
+                    </label>
+                  </div>
+                </fieldset>
+              </form>
+            </div>
+          </div>
+          <!-- footer - close button and save button -->
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-dismiss="modal"
+              id="closeEditUserModalButton"
+            >
+              Close
+            </button>
+            <button
+              (click)="onUpdateUser()"
+              [disabled]="editUserForm.invalid || !isAdmin || !isSuperAdmin"
+              type="button"
+              class="btn btn-primary"
+            >
+              Save changes
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- change password -->
-    <div [hidden]="isUser || isHrOrManager" class="tab-pane fade" id="reset-password">
-      <form #resetPasswordForm="ngForm" (ngSubmit)="onResetPassword(resetPasswordForm)">
+    <div
+      [hidden]="isUser || isHrOrManager"
+      class="tab-pane fade"
+      id="reset-password"
+    >
+      <form
+        #resetPasswordForm="ngForm"
+        (ngSubmit)="onResetPassword(resetPasswordForm)"
+      >
         <fieldset>
           <legend>User Password Management</legend>
           <div class="form-group">
             <label for="inputEmailChangePassword">Email address</label>
             <input
-              type="email"
-              name="reset-password-email"
-              id="inputEmailChangePassword"
-              required
               ngModel
+              name="email"
+              required
+              type="email"
               class="form-control"
               placeholder="Enter email (example@email.com)"
+              id="inputEmailChangePassword"
             />
-            <small class="form-text text-muted">We'll never share your email with anyone else.</small>
+            <small class="form-text text-muted"
+              >We'll never share your email with anyone else.</small
+            >
           </div>
           <button type="submit" [disabled]="false" class="btn btn-primary">
             <i *ngIf="refreshing" class="fas fa-spinner fa-spin"></i>
+            <span *ngIf="refreshing">&nbsp;&nbsp;Loading...</span>
             <span *ngIf="!refreshing">Reset Password</span>
           </button>
         </fieldset>
@@ -159,45 +705,72 @@
                       <div class="row">
                         <div class="col-12 col-sm-auto">
                           <div class="mx-auto" style="width: 120px">
-                            <div class="d-flex justify-content-center align-items-center rounded">
+                            <div
+                              class="d-flex justify-content-center align-items-center rounded"
+                            >
                               <img
                                 class="rounded"
                                 height="135"
                                 width="135"
                                 src="{{ user?.profileImageUrl }}"
-                                alt="{{ user?.firstName }} {{ user?.lastName }} profile picture"
+                                alt="{{ user?.firstName }} {{
+                                  user?.lastName
+                                }} profile picture"
                               />
                             </div>
-                            <div *ngIf="fileStatus?.status === 'progress'" class="progress mt-1">
+                            <div
+                              *ngIf="uploadPictureStatus?.status === 'progress'"
+                              class="progress mt-1"
+                            >
                               <div
                                 class="progress-bar bg-info"
                                 role="progressbar"
                                 aria-valuenow="0"
                                 aria-valuemin="0"
                                 aria-valuemax="100"
-                                [style.width.%]="fileStatus?.percentage"
+                                [style.width.%]="
+                                  uploadPictureStatus?.percentage
+                                "
                               >
-                                {{ fileStatus?.percentage }}%
+                                {{ uploadPictureStatus?.percentage }}%
                               </div>
                             </div>
                           </div>
                         </div>
-                        <div class="col d-flex flex-column flex-sm-row justify-content-between mb-3">
+                        <div
+                          class="col d-flex flex-column flex-sm-row justify-content-between mb-3"
+                        >
                           <div class="text-center text-sm-left mb-2 mb-sm-0">
-                            <h4 class="pt-sm-2 pb-1 mb-0 text-nowrap">{{ user?.firstName }} {{ user?.lastName }}</h4>
+                            <h4 class="pt-sm-2 pb-1 mb-0 text-nowrap">
+                              {{ user?.firstName }} {{ user?.lastName }}
+                            </h4>
                             <p class="mb-0">{{ user?.username }}</p>
-                            <div *ngIf="user?.lastLoginDateDisplay !== null" class="text-muted">
+                            <div
+                              *ngIf="user?.lastLoginDateDisplay !== null"
+                              class="text-muted"
+                            >
                               <small
                                 >Last login:
-                                {{ user?.lastLoginDateDisplay | date: "EEEE | MMMM d, y | hh:mm:ss a" }}</small
+                                {{
+                                  user?.lastLoginDateDisplay
+                                    | date: "EEEE | MMMM d, y | hh:mm:ss a"
+                                }}</small
                               >
                             </div>
                             <div class="mt-2 btn-toolbar">
-                              <button (click)="updateProfileImage()" class="btn btn-primary" type="button">
+                              <button
+                                (click)="updateProfileImage()"
+                                class="btn btn-primary"
+                                type="button"
+                              >
                                 <i class="fa fa-fw fa-camera"></i>
                                 <span>Change Photo</span>
                               </button>
-                              <button (click)="resetProfileImage()" class="btn btn-danger ml-3" type="button">
+                              <button
+                                (click)="resetProfileImage()"
+                                class="btn btn-danger ml-3"
+                                type="button"
+                              >
                                 <i class="fa fa-fw fa-camera"></i>
                                 <span>Reset Photo</span>
                               </button>
@@ -205,7 +778,10 @@
                           </div>
                           <div class="text-center text-sm-right">
                             <div class="text-muted">
-                              <small>Joined {{ user?.joinDate | date: "mediumDate" }}</small>
+                              <small
+                                >Joined
+                                {{ user?.joinDate | date: "mediumDate" }}</small
+                              >
                             </div>
                           </div>
                         </div>
@@ -214,7 +790,9 @@
                         <div class="tab-pane active">
                           <form
                             #profileUserForm="ngForm"
-                            (ngSubmit)="onUpdateCurrentUser(profileUserForm.value)"
+                            (ngSubmit)="
+                              onUpdateCurrentUser(profileUserForm.value)
+                            "
                             class="form"
                             novalidate
                           >
@@ -225,10 +803,10 @@
                                     <div class="form-group">
                                       <label>First Name</label>
                                       <input
-                                        type="text"
+                                        [(ngModel)]="user.firstName"
                                         name="firstName"
                                         required
-                                        [(ngModel)]="user.firstName"
+                                        type="text"
                                         class="form-control"
                                       />
                                     </div>
@@ -237,10 +815,10 @@
                                     <div class="form-group">
                                       <label>Last Name</label>
                                       <input
-                                        type="text"
+                                        [(ngModel)]="user.lastName"
                                         name="lastName"
                                         required
-                                        [(ngModel)]="user.lastName"
+                                        type="text"
                                         class="form-control"
                                       />
                                     </div>
@@ -251,10 +829,10 @@
                                     <div class="form-group">
                                       <label>Username</label>
                                       <input
-                                        type="text"
+                                        [(ngModel)]="user.username"
                                         name="username"
                                         required
-                                        [(ngModel)]="user.username"
+                                        type="text"
                                         class="form-control"
                                       />
                                     </div>
@@ -265,10 +843,10 @@
                                     <div class="form-group">
                                       <label>Email</label>
                                       <input
-                                        type="text"
+                                        [(ngModel)]="user.email"
                                         name="email"
                                         required
-                                        [(ngModel)]="user.email"
+                                        type="text"
                                         class="form-control"
                                       />
                                     </div>
@@ -276,24 +854,51 @@
                                 </div>
                                 <div class="row">
                                   <div class="col mb-3">
-                                    <div *ngIf="isSuperAdmin" class="form-group">
-                                      <label>Role</label>
-                                      <select name="role" required [(ngModel)]="user.role" class="form-control">
-                                        <option value="ROLE_USER">USER</option>
-                                        <option value="ROLE_HR">HR</option>
-                                        <option value="ROLE_MANAGER">MANAGER</option>
-                                        <option value="ROLE_ADMIN">ADMIN</option>
-                                        <option value="ROLE_SUPER_ADMIN">SUPER ADMIN</option>
-                                      </select>
-                                    </div>
-                                    <div *ngIf="!isSuperAdmin" class="form-group">
-                                      <label>Role</label>
-                                      <input
-                                        type="text"
+                                    <div
+                                      *ngIf="isSuperAdmin"
+                                      class="form-group"
+                                    >
+                                      <label
+                                        >Role
+                                        <small [hidden]="isSuperAdmin"
+                                          >(read only)</small
+                                        ></label
+                                      >
+                                      <select
+                                        [(ngModel)]="user.role"
                                         name="role"
                                         required
+                                        class="form-control"
+                                      >
+                                        <option value="ROLE_USER">USER</option>
+                                        <option value="ROLE_HR">HR</option>
+                                        <option value="ROLE_MANAGER">
+                                          MANAGER
+                                        </option>
+                                        <option value="ROLE_ADMIN">
+                                          ADMIN
+                                        </option>
+                                        <option value="ROLE_SUPER_ADMIN">
+                                          SUPER ADMIN
+                                        </option>
+                                      </select>
+                                    </div>
+                                    <div
+                                      *ngIf="!isSuperAdmin"
+                                      class="form-group"
+                                    >
+                                      <label
+                                        >Role
+                                        <small [hidden]="isSuperAdmin"
+                                          >(read only)</small
+                                        ></label
+                                      >
+                                      <input
                                         [(ngModel)]="user.role"
+                                        name="role"
+                                        required
                                         readonly
+                                        type="text"
                                         class="form-control"
                                       />
                                     </div>
@@ -307,25 +912,35 @@
                                 <div class="row">
                                   <div class="col">
                                     <div class="custom-controls-stacked px-2">
-                                      <div class="custom-control custom-checkbox">
+                                      <div
+                                        class="custom-control custom-checkbox"
+                                      >
                                         <input
-                                          name="active"
-                                          type="checkbox"
                                           [(ngModel)]="user.active"
-                                          class="custom-control-input"
+                                          name="active"
                                           id="activeCheckboxInput"
-                                        />
-                                        <label class="custom-control-label" for="activeCheckboxInput">Active</label>
-                                      </div>
-                                      <div class="custom-control custom-checkbox">
-                                        <input
-                                          name="notLocked"
                                           type="checkbox"
-                                          [(ngModel)]="user.notLocked"
                                           class="custom-control-input"
-                                          id="notLockedCheckboxInput"
                                         />
-                                        <label class="custom-control-label" for="notLockedCheckboxInput"
+                                        <label
+                                          class="custom-control-label"
+                                          for="activeCheckboxInput"
+                                          >Active</label
+                                        >
+                                      </div>
+                                      <div
+                                        class="custom-control custom-checkbox"
+                                      >
+                                        <input
+                                          [(ngModel)]="user.notLocked"
+                                          name="notLocked"
+                                          id="notLockedCheckboxInput"
+                                          type="checkbox"
+                                          class="custom-control-input"
+                                        />
+                                        <label
+                                          class="custom-control-label"
+                                          for="notLockedCheckboxInput"
                                           >Unlocked</label
                                         >
                                       </div>
@@ -337,7 +952,13 @@
                             <div class="row">
                               <div class="col d-flex justify-content-end">
                                 <button class="btn btn-primary" type="submit">
-                                  <i *ngIf="refreshing" class="fas fa-spinner fa-spin"></i>
+                                  <i
+                                    *ngIf="refreshing"
+                                    class="fas fa-spinner fa-spin"
+                                  ></i>
+                                  <span *ngIf="refreshing"
+                                    >&nbsp;&nbsp;Loading...</span
+                                  >
                                   <span *ngIf="!refreshing">Save Changes</span>
                                 </button>
                               </div>
@@ -353,7 +974,10 @@
                 <div class="card mb-3">
                   <div class="card-body">
                     <div class="px-xl-3">
-                      <button (click)="onLogOut()" class="btn btn-block btn-danger">
+                      <button
+                        (click)="onLogOut()"
+                        class="btn btn-block btn-danger"
+                      >
                         <span>Logout</span>
                         <i class="fas fa-sign-in-alt ml-1"></i>
                       </button>
@@ -362,360 +986,37 @@
                 </div>
                 <div class="card">
                   <div class="card-body">
-                    <h6 class="card-title font-weight-bold">Permissions From Role</h6>
-                    <h6 *ngFor="let authority of user?.authorities" class="card-text">{{ authority }}</h6>
+                    <h6 class="card-title font-weight-bold">
+                      Permissions From Role
+                    </h6>
+                    <h6
+                      *ngFor="let authority of user?.authorities"
+                      class="card-text"
+                    >
+                      {{ authority }}
+                    </h6>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- modal user info (selected user) -->
-    <div
-      class="modal fade bd-example-modal-lg"
-      id="viewUserModal"
-      tabindex="-1"
-      role="dialog"
-      aria-labelledby=""
-      aria-hidden="true"
-    >
-      <div class="modal-dialog" role="document">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title text-center" id="exampleModalLongTitle">
-              {{ selectedUser?.firstName }}
-              {{ selectedUser?.lastName }}
-            </h5>
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-              <span aria-hidden="true">&times;</span>
-            </button>
-          </div>
-          <div class="modal-body">
-            <div>
-              <div class="card">
-                <div class="card-body">
-                  <div class="row">
-                    <div class="col-12 col-sm-auto">
-                      <div class="mx-auto" style="width: 120px">
-                        <div class="d-flex justify-content-center align-items-center rounded">
-                          <img
-                            class="rounded"
-                            height="120"
-                            width="120"
-                            src="{{ selectedUser?.profileImageUrl }}"
-                            alt="{{ selectedUser?.firstName }} {{ selectedUser?.lastName }} profile picture"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                    <div class="col d-flex flex-column flex-sm-row justify-content-between">
-                      <div class="text-center text-sm-left mb-sm-0">
-                        <h6 class="pt-sm-2 pb-1 mb-0 text-nowrap">
-                          {{ selectedUser?.firstName }} {{ selectedUser?.lastName }}
-                        </h6>
-                        <p class="mb-1">{{ selectedUser?.username }}</p>
-                        <div class="">
-                          Status:
-                          <span [hidden]="!selectedUser?.active" class="badge badge-success">Active</span>
-                          <span [hidden]="selectedUser?.active" class="badge badge-danger">Inactive</span>
-                        </div>
-                        <div *ngIf="selectedUser?.lastLoginDateDisplay" class="text-muted">
-                          <small>Last Login: {{ selectedUser?.lastLoginDateDisplay | date: "short" }}</small>
-                        </div>
-                      </div>
-                      <div class="text-center text-sm-right">
-                        <div class="text-muted">
-                          <small>Joined {{ selectedUser?.joinDate | date: "mediumDate" }}</small>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <ul class="list-group list-group-flush">
-                  <li class="list-group-item"></li>
-                  <li class="list-group-item"><i class="fa fa-id-badge float-right"></i>{{ selectedUser?.userId }}</li>
-                  <li class="list-group-item"><i class="fa fa-envelope float-right"></i>{{ selectedUser?.email }}</li>
-                  <li class="list-group-item">
-                    <i class="fas fa-shield-alt float-right"></i>{{ selectedUser?.role.substring(5) }}
-                  </li>
-                  <li *ngIf="selectedUser?.lastLoginDateDisplay" class="list-group-item">
-                    <i class="fas fa-sign-in-alt float-right"></i
-                    >{{ selectedUser?.lastLoginDateDisplay | date: "EEEE | MMMM d, y | hh:mm:ss a" }}
-                  </li>
-                  <li class="list-group-item">
-                    <span [hidden]="selectedUser?.notLocked">
-                      <i class="fa fa-lock float-right" style="color: red"> </i>
-                      Account Locked
-                    </span>
-                    <span [hidden]="!selectedUser?.notLocked">
-                      <i class="fa fa-unlock float-right" style="color: green"> </i>
-                      Account Unlocked
-                    </span>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- model add user -->
-    <div
-      [hidden]="isUser || isHrOrManager"
-      class="modal draggable fade bd-example-modal-lg"
-      id="addUserModal"
-      tabindex="-1"
-      role="dialog"
-      aria-labelledby="exampleModalCenterTitle"
-      aria-hidden="true"
-    >
-      <div class="modal-dialog" role="document">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title text-center">New User</h5>
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-              <span aria-hidden="true">&times;</span>
-            </button>
-          </div>
-          <div class="modal-body">
-            <div>
-              <form #newUserForm="ngForm" (ngSubmit)="onAddNewUser(newUserForm)">
-                <div class="form-group">
-                  <label for="firstName">First Name</label>
-                  <input type="text" name="firstName" required ngModel class="form-control" />
-                </div>
-                <div class="form-group">
-                  <label for="lastName">Last Name</label>
-                  <input type="text" name="lastName" required ngModel class="form-control" />
-                </div>
-                <div class="form-group">
-                  <label for="username">Username</label>
-                  <input type="text" name="username" required ngModel class="form-control" />
-                </div>
-                <div class="form-group">
-                  <label for="email">Email</label>
-                  <input type="email" name="email" required ngModel class="form-control" />
-                </div>
-                <div *ngIf="isSuperAdmin" class="form-group">
-                  <label for="authority">Role</label>
-                  <select name="role" required ngModel="ROLE_USER" class="form-control">
-                    <option value="ROLE_USER">USER</option>
-                    <option value="ROLE_HR">HR</option>
-                    <option value="ROLE_MANAGER">MANAGER</option>
-                    <option value="ROLE_ADMIN">ADMIN</option>
-                    <option value="ROLE_SUPER_ADMIN">SUPER ADMIN</option>
-                  </select>
-                </div>
-                <div *ngIf="!isSuperAdmin" class="form-group">
-                  <label for="authority">Role</label>
-                  <input type="text" name="role" required ngModel="USER" readonly class="form-control" />
-                </div>
-                <div class="input-group mb-2">
-                  <div class="input-group-prepend">
-                    <span class="input-group-text">Profile Picture </span>
-                  </div>
-                  <div class="custom-file">
-                    <input
-                      type="file"
-                      name="profileImage"
-                      (change)="onProfileImageChange($event.target.files[0].name, $event.target.files[0])"
-                      class="custom-file-input"
-                      accept="image/*"
-                    />
-                    <label class="custom-file-label"
-                      ><span [hidden]="!fileName">{{ fileName }}</span>
-                      <span [hidden]="fileName">Choose File</span>
-                    </label>
-                  </div>
-                </div>
-                <fieldset class="form-group">
-                  <div class="form-check">
-                    <label class="form-check-label">
-                      <input type="checkbox" name="active" ngModel class="form-check-input" />
-                      Active
-                    </label>
-                  </div>
-                  <div class="form-check disabled">
-                    <label class="form-check-label">
-                      <input type="checkbox" name="notLocked" ngModel class="form-check-input" />
-                      Unlocked
-                    </label>
-                  </div>
-                </fieldset>
-                <button type="submit" style="display: none" id="new-user-save"></button>
-              </form>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-dismiss="modal" id="new-user-close">Close</button>
-            <button type="button" (click)="saveNewUser()" [disabled]="newUserForm.invalid" class="btn btn-primary">
-              Save changes
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- modal edit user (selected user) -->
-    <div
-      class="modal draggable fade bd-example-modal-lg"
-      id="editUserModal"
-      tabindex="-1"
-      role="dialog"
-      aria-labelledby="exampleModalCenterTitle"
-      aria-hidden="true"
-    >
-      <div class="modal-dialog" role="document">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title text-center">
-              Edit {{ editUser?.firstName }} {{ editUser?.lastName }}
-              <small [hidden]="isHrOrManager || isAdmin || isSuperAdmin">(read only)</small>
-            </h5>
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-              <span aria-hidden="true">&times;</span>
-            </button>
-          </div>
-          <div class="modal-body">
-            <div>
-              <form #editUserForm="ngForm">
-                <div class="form-group">
-                  <label for="firstName">First Name</label>
-                  <input
-                    type="text"
-                    [disabled]="isUser"
-                    name="firstName"
-                    required
-                    [(ngModel)]="editUser.firstName"
-                    class="form-control"
-                  />
-                </div>
-                <div class="form-group">
-                  <label for="lastName">Last Name</label>
-                  <input
-                    type="text"
-                    [disabled]="isUser"
-                    name="lastName"
-                    required
-                    [(ngModel)]="editUser.lastName"
-                    class="form-control"
-                  />
-                </div>
-                <div class="form-group">
-                  <label for="username">Username</label>
-                  <input
-                    type="text"
-                    [disabled]="isUser"
-                    name="username"
-                    required
-                    [(ngModel)]="editUser.username"
-                    class="form-control"
-                  />
-                </div>
-                <div class="form-group">
-                  <label for="email">Email</label>
-                  <input
-                    type="email"
-                    [disabled]="isUser"
-                    name="email"
-                    required
-                    [(ngModel)]="editUser.email"
-                    class="form-control"
-                  />
-                </div>
-                <div class="form-group">
-                  <label for="authority">Role <small [hidden]="isSuperAdmin">(read only)</small></label>
-                  <select name="role" [disabled]="isUser" required [(ngModel)]="editUser.role" class="form-control">
-                    <option value="ROLE_USER">USER</option>
-                    <option value="ROLE_HR">HR</option>
-                    <option value="ROLE_MANAGER">MANAGER</option>
-                    <option value="ROLE_ADMIN">ADMIN</option>
-                    <option value="ROLE_SUPER_ADMIN">SUPER ADMIN</option>
-                  </select>
-                </div>
-                <div class="input-group mb-2">
-                  <div class="input-group-prepend">
-                    <span class="input-group-text">Profile Picture </span>
-                  </div>
-                  <div class="custom-file">
-                    <input
-                      type="file"
-                      [disabled]="isUser"
-                      name="profileImage"
-                      (change)="onProfileImageChange($event.target.files[0].name, $event.target.files[0])"
-                      class="custom-file-input"
-                      accept="image/*"
-                    />
-                    <label class="custom-file-label"
-                      ><span [hidden]="!fileName">{{ fileName }}</span>
-                      <span [hidden]="fileName">Choose File</span>
-                    </label>
-                  </div>
-                </div>
-                <fieldset class="form-group">
-                  <div class="form-check">
-                    <label class="form-check-label">
-                      <input
-                        type="checkbox"
-                        name="active"
-                        [disabled]="isUser"
-                        [(ngModel)]="editUser.active"
-                        class="form-check-input"
-                      />
-                      Active <small [hidden]="isHrOrManager || isAdmin || isSuperAdmin">(read only)</small>
-                    </label>
-                  </div>
-                  <div class="form-check disabled">
-                    <label class="form-check-label">
-                      <input
-                        type="checkbox"
-                        name="locked"
-                        [disabled]="isUser"
-                        [(ngModel)]="editUser.notLocked"
-                        class="form-check-input"
-                      />
-                      Unlocked <small [hidden]="isHrOrManager || isAdmin || isSuperAdmin">(read only)</small>
-                    </label>
-                  </div>
-                </fieldset>
-                <button type="submit" style="display: none" id="new-user-save"></button>
-              </form>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-dismiss="modal" id="closeEditUserModalButton">
-              Close
-            </button>
-            <button
-              type="button"
-              (click)="onUpdateUser()"
-              [disabled]="editUserForm.invalid || !isAdmin || !isSuperAdmin"
-              class="btn btn-primary"
-            >
-              Save changes
-            </button>
           </div>
         </div>
       </div>
     </div>
   </div>
-
-  <!-- update profile image  -->
-  <form enctype="multipart/form-data" style="display: none">
-    <input
-      type="file"
-      (change)="onProfileImageChange($event.target.files[0].name, $event.target.files[0]); onUpdateProfileImage()"
-      name="profile-image-input"
-      id="profile-image-input"
-      placeholder="file"
-      accept="image/*"
-    />
-  </form>
 </div>
+
+<!-- update profile image  -->
+<form enctype="multipart/form-data" style="display: none">
+  <input
+    type="file"
+    (change)="
+      onProfileImageChange($event.target.files[0].name, $event.target.files[0]);
+      onUpdateProfileImage()
+    "
+    name="profile-image-input"
+    id="profile-image-input"
+    placeholder="file"
+    accept="image/*"
+  />
+</form>

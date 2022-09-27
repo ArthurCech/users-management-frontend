@@ -22,8 +22,10 @@
               #usernameInput="ngModel"
             />
           </div>
-          <span class="help-block" *ngIf="usernameInput.invalid && usernameInput.touched"
-            >Please, enter a username</span
+          <span
+            class="help-block"
+            *ngIf="usernameInput.invalid && usernameInput.touched"
+            >Please, enter a valid username</span
           >
           <div class="input-group mb-3">
             <div class="input-group-append">
@@ -39,12 +41,21 @@
               #passwordInput="ngModel"
             />
           </div>
-          <span class="help-block" style="color: darkred" *ngIf="passwordInput.invalid && passwordInput.touched"
-            >Please, enter a password</span
+          <span
+            class="help-block"
+            style="color: darkred"
+            *ngIf="passwordInput.invalid && passwordInput.touched"
+            >Please, enter a valid password</span
           >
           <div class="d-flex justify-content-center mt-3 login-container">
-            <button type="submit" [disabled]="loginForm.invalid || showLoading" name="button" class="btn login_btn">
-              <i class="fas fa-spinner fa-spin" *ngIf="showLoading"></i>&nbsp;&nbsp;
+            <button
+              type="submit"
+              [disabled]="loginForm.invalid || showLoading"
+              name="button"
+              class="btn login_btn"
+            >
+              <i *ngIf="showLoading" class="fas fa-spinner fa-spin"></i>
+              <span *ngIf="showLoading">&nbsp;&nbsp; Loading...</span>
               <span *ngIf="!showLoading">Login</span>
             </button>
           </div>
@@ -53,7 +64,9 @@
       <div class="mt-4">
         <div class="d-flex justify-content-center links">
           Don't have an account?
-          <a routerLink="/register" class="ml-2" style="color: #2c3e50">Sign up.</a>
+          <a routerLink="/register" class="ml-2" style="color: #2c3e50"
+            >Sign up.</a
+          >
         </div>
       </div>
     </div>
